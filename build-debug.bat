@@ -5,5 +5,5 @@ clang-cl -DDEBUG -I/mpir -Werror -Wimplicit-fallthrough -Wno-assume -Wno-depreca
 if errorlevel 1 goto :eof
 
 rem Then compile with Microsoft C++
-cl /DDEBUG /MTd /WX /Zi /std:c++17 *.cc dbghelp.lib
+cl /DDEBUG /MTd /WX /Zi /std:c++17 *.cc setargv.obj dbghelp.lib
 if errorlevel 1 goto :eof
