@@ -1,7 +1,3 @@
-#ifdef _MSC_VER
-#pragma warning(disable : 4530)
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +14,7 @@ using std::set_new_handler;
 
 #include <regex>
 using std::regex;
+using std::regex_error;
 using std::regex_match;
 using std::smatch;
 
@@ -173,46 +170,77 @@ int main(int argc, char **argv) {
 		help();
 		return 1;
 	}
-	regex from(args1[0]);
-	auto &to = args1[1];
 
-	// process files
-	for (int i = 2; i < args1.size(); ++i) {
-		auto &file = args1[i];
+	// from becomes a regular expression; if there was an error in the syntax thereof, an exception will be thrown, so a try-catch
+	// block must begin here
+	try {
+		regex from(args1[0]);
+		auto &to = args1[1];
 
-		// going by the extension, does it seem to be a C, C++ or C# file? that matters because in those languages, '#' is  used at
-		// the start of a line for something other than a line comment
-		bool isc = 0;
-		auto j = file.size();
-		while (j && file[j - 1] != '.') --j;
-		if (j && j < file.size()) switch (file[j]) {
-			case 'c':
-			case 'C':
-			case 'h':
-			case 'H':
-				isc = 1;
-				break;
+		// remember the total number of lines we changed, or would have changed
+		int tot = 0;
+
+		// process files
+		for (int i = 2; i < args1.size(); ++i) {
+			auto &file = args1[i];
+
+			// going by the extension, does it seem to be a C, C++ or C# file? that matters because in those languages, '#' is  used
+			// at the start of a line for something other than a line comment
+			bool isc = 0;
+			auto j = file.size();
+			while (j && file[j - 1] != '.') --j;
+			if (j && j < file.size()) switch (file[j]) {
+				case 'c':
+				case 'C':
+				case 'h':
+				case 'H':
+					isc = 1;
+					break;
+				}
+
+			// read the contents of the file
+			vector<string> v;
+			readFile(file, v);
+
+			// remember the number of lines we changed, or would have changed, in this file
+			int changed = 0;
+
+			// for each line in the file
+			for (int j = 0; j < v.size(); ++j) {
+				auto &s = v[j];
+
+				// unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
+				// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used
+				// markers
+				if (!comments) {
+					if (startsWith(s, "//")) continue;
+					if (!isc && startsWith(s, "#")) continue;
+				}
+
+				// try doing the actual replace in this line
+				auto t = regex_replace(s, from, to);
+
+				// and see whether it changed
+				if (s != t) {
+					if (dry) {
+						cout << file << ':' << j + 1 << '\n';
+						cout << s << '\n';
+						cout << t << '\n';
+						cout << '\n';
+					}
+					++changed;
+				}
 			}
 
-		// read the contents of the file
-		vector<string> v;
-		readFile(file, v);
-
-		// remember did we make, or would we have made, made any changes
-		bool changed = 0;
-
-		// for each line in the file
-		for (int j = 0; j < v.size(); ++j) {
-			auto &s = v[j];
-
-			// unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
-			// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used markers
-			if (!comments) {
-				if (startsWith(s, "//")) continue;
-				if (!isc && startsWith(s, "#")) continue;
+			if (changed) {
+				if (!dry) { cout << file << ' ' << changed << '\n'; }
+				tot += changed;
 			}
 		}
-
-		if (changed) cout << file << '\n';
+		cout << tot << '\n';
+	} catch (const regex_error &e) {
+		cerr << args1[0] << ": " << e.what() << '\n';
+		return 1;
 	}
+	return 0;
 }
