@@ -15,6 +15,14 @@ def write_lines(filename, lines):
             f.write(s + "\n")
 
 
+def list_rindex(v, x):
+    i = len(v)
+    while 1:
+        i -= 1
+        if v[i] == x:
+            return i
+
+
 # version
 
 for s in read_lines("replac.cc"):
@@ -29,7 +37,7 @@ if not version:
 
 v = read_lines("README.md")
 i = v.index("```")
-j = v.rindex("```")
+j = list_rindex(v, "```")
 assert i < j
 v[i + 1 : j] = ["x", "y"]
 write_lines("README.md", v)
