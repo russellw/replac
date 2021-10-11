@@ -39,7 +39,21 @@ v = read_lines("README.md")
 i = v.index("```")
 j = list_rindex(v, "```")
 assert i < j
-v[i + 1 : j] = ["x", "y"]
+
+p = subprocess.Popen(
+    ["./replac.exe", "-h"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+)
+stdout, stderr = p.communicate()
+stdout = str(stdout, "utf-8")
+stderr = str(stderr, "utf-8")
+if stderr:
+    print(stderr)
+    exit(1)
+h = stdout.splitlines()
+
+v[i + 1 : j] = h
 write_lines("README.md", v)
 
 # build
