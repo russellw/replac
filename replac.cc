@@ -29,6 +29,12 @@ using std::vector;
 
 #define version "1"
 
+#ifdef DEBUG
+#define dbg(a) cout << __FILE__ << ':' << __LINE__ << ": " << #a << ": " << a << '\n';
+#else
+#define dbg(a)
+#endif
+
 // Unlike the version in ctype.h, this is well-defined for all input values, even if char is signed
 inline bool isSpace(int c) {
 	return 0 < c && c <= ' ';
@@ -135,7 +141,7 @@ void parse(const vector<string> &args) {
 
 bool eq(const string &s, int i, const char *t) {
 	for (; *t; ++i)
-		if (i >= s.size() || s[i] != *t) return 0;
+		if (i >= s.size() || s[i] != *t++) return 0;
 	return 1;
 }
 
@@ -167,7 +173,7 @@ int main(int argc, char **argv) {
 		help();
 		return 1;
 	}
-	auto &from = args1[0];
+	regex from(args1[0]);
 	auto &to = args1[1];
 
 	// process files
@@ -179,7 +185,7 @@ int main(int argc, char **argv) {
 		bool isc = 0;
 		auto j = file.size();
 		while (j && file[j - 1] != '.') --j;
-		if (file[j] == '.' && j + 1 < file.size()) switch (file[j + 1]) {
+		if (j && j < file.size()) switch (file[j]) {
 			case 'c':
 			case 'C':
 			case 'h':
@@ -205,8 +211,6 @@ int main(int argc, char **argv) {
 				if (startsWith(s, "//")) continue;
 				if (!isc && startsWith(s, "#")) continue;
 			}
-
-			cout << s << '\n';
 		}
 
 		if (changed) cout << file << '\n';
