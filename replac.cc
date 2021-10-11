@@ -227,13 +227,17 @@ int main(int argc, char **argv) {
 						cout << s << '\n';
 						cout << t << '\n';
 						cout << '\n';
-					}
+					} else
+						s = t;
 					++changed;
 				}
 			}
 
 			if (changed) {
-				if (!dry) { cout << file << ' ' << changed << '\n'; }
+				if (!dry) {
+					writeFile(file, v);
+					cout << file << ' ' << changed << '\n';
+				}
 				tot += changed;
 			}
 		}

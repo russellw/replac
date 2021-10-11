@@ -25,6 +25,14 @@ if not version:
     print("replac.cc: version not defined")
     exit(1)
 
+# readme
+
+v = read_lines("README.md")
+i = v.index("```")
+j = v.rindex("```")
+assert i < j
+v[i + 1 : j] = ["x", "y"]
+write_lines("README.md", v)
 
 # build
 
