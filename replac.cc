@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <iostream>
-using std::cerr;
-using std::cout;
-
 #include <fstream>
 using std::ifstream;
 using std::ofstream;
+
+#include <iostream>
+using std::cerr;
+using std::cout;
 
 #include <new>
 using std::set_new_handler;
@@ -56,40 +56,52 @@ void readFile(const string &file, vector<string> &v) {
 	while (getline(in, str)) v.push_back(str);
 }
 
-vector<string> files;
+vector<string> args1;
+
+void parse(const vector<string> &args) {
+	for (auto s : args) {
+		if (s.empty()) continue;
+		int i = 0;
+		while (i < s.size() && s[i] == '-') ++i;
+		if (!i) {
+			args1.push_back(s);
+			continue;
+		}
+		if (i == s.size()) {
+			cerr << s << ": unknown option\n";
+			exit(1);
+		}
+		switch (s[i]) {
+		case '?':
+		case 'h':
+			help();
+			exit(0);
+		case 'V':
+		case 'v':
+			cout << "replac version " version "\n";
+			exit(0);
+		default:
+			cerr << s << ": unknown option\n";
+			exit(1);
+		}
+	}
+}
 
 int main(int argc, char **argv) {
 	set_new_handler([]() {
 		perror("new");
 		exit(1);
 	});
-
-	if (argc < 4) {
+	vector<string> args(argv + 1, argv + argc);
+	parse(args);
+	if (args1.size() < 3) {
 		help();
-		return 0;
+		return 1;
 	}
-
-	for (int i = 1; i < argc; ++i) {
-		auto s = argv[i];
-		if (*s != '-') {
-			files.push_back(s);
-			continue;
-		}
-		while (*s == '-') ++s;
-		switch (*s) {
-		case '?':
-		case 'h':
-			help();
-			return 0;
-		case 'V':
-		case 'v':
-			cout << "replac version " version "\n";
-			return 0;
-		default:
-			cerr << argv[i] << ": unknown option\n";
-			return 1;
-		}
+	auto &from = args1[0];
+	auto &to = args1[1];
+	for (int i = 2; i < args1.size(); ++i) {
+		auto &file = args1[i];
+		cout << (file) << '\n';
 	}
-
-	for (auto file : files) { cout << (file) << '\n'; }
 }
