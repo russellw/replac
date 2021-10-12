@@ -32,7 +32,7 @@ using std::vector;
 #define dbg(a)
 #endif
 
-// Unlike the version in ctype.h, this is well-defined for all input values, even if char is signed
+// Unlike the version in ctype.h, this is well-defined for all input values, even if char is signed.
 inline bool isSpace(int c) {
 	return 0 < c && c <= ' ';
 }
@@ -85,10 +85,10 @@ vector<string> args1;
 
 void parse(const vector<string> &args) {
 	for (auto &s : args) {
-		// skip empty strings that might be blank  lines in response file
+		// Skip empty strings that might be blank lines in response file.
 		if (s.empty()) continue;
 
-		// response file
+		// Response file.
 		if (s[0] == '@') {
 			vector<string> v;
 			readFile(s.substr(1, s.size() - 1), v);
@@ -96,24 +96,28 @@ void parse(const vector<string> &args) {
 			continue;
 		}
 
-		// does this argument begin with '-'?
+		// Does this argument begin with '-'?
 		int i = 0;
 		while (i < s.size() && s[i] == '-') ++i;
 
-		// no, it's a pattern or file
+		// No, it's a pattern or file.
 		if (!i) {
 			args1.push_back(s);
 			continue;
 		}
 
-		// yes, but there was nothing after that
+		// Yes, but there was nothing after that.
 		if (i == s.size()) {
 			cerr << s << ": unknown option\n";
 			exit(1);
 		}
 
-		// option
+		// Option.
 		switch (s[i]) {
+		case '?':
+		case 'h':
+			help();
+			exit(0);
 		case 'c':
 			comments = 1;
 			break;
@@ -121,10 +125,6 @@ void parse(const vector<string> &args) {
 		case 'n':
 			dry = 1;
 			break;
-		case '?':
-		case 'h':
-			help();
-			exit(0);
 		case 'V':
 		case 'v':
 			cout << "replac version " version "\n";
@@ -157,13 +157,13 @@ bool endsWith(const string &s, const char *t) {
 }
 
 int main(int argc, char **argv) {
-	// set up error handling
+	// Set up error handling.
 	set_new_handler([]() {
 		perror("new");
 		exit(1);
 	});
 
-	// command line arguments
+	// Command line arguments.
 	vector<string> args(argv + 1, argv + argc);
 	parse(args);
 	if (args1.size() < 3) {
@@ -171,21 +171,21 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	// from becomes a regular expression; if there was an error in the syntax thereof, an exception will be thrown, so a try-catch
-	// block must begin here
+	// From becomes a regular expression; if there was an error in the syntax thereof, an exception will be thrown, so a try-catch
+	// block must begin here.
 	try {
 		regex from(args1[0]);
 		auto &to = args1[1];
 
-		// remember the total number of lines we changed, or would have changed
+		// Remember the total number of lines we changed, or would have changed.
 		int tot = 0;
 
-		// process files
+		// Process files.
 		for (int i = 2; i < args1.size(); ++i) {
 			auto &file = args1[i];
 
-			// going by the extension, does it seem to be a C, C++ or C# file? that matters because in those languages, '#' is  used
-			// at the start of a line for something other than a line comment
+			// Going by the extension, does it seem to be a C, C++ or C# file? That matters because in those languages, '#' is used
+			// at the start of a line for something other than a line comment.
 			bool isc = 0;
 			auto j = file.size();
 			while (j && file[j - 1] != '.') --j;
@@ -198,29 +198,29 @@ int main(int argc, char **argv) {
 					break;
 				}
 
-			// read the contents of the file
+			// Read the contents of the file.
 			vector<string> v;
 			readFile(file, v);
 
-			// remember the number of lines we changed, or would have changed, in this file
+			// Remember the number of lines we changed, or would have changed, in this file.
 			int changed = 0;
 
-			// for each line in the file
+			// For each line in the file.
 			for (int j = 0; j < v.size(); ++j) {
 				auto &s = v[j];
 
-				// unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
+				// Unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
 				// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used
-				// markers
+				// markers.
 				if (!comments) {
 					if (startsWith(s, "//")) continue;
 					if (!isc && startsWith(s, "#")) continue;
 				}
 
-				// try doing the actual replace in this line
+				// Try doing the actual replace in this line.
 				auto t = regex_replace(s, from, to);
 
-				// and see whether it changed
+				// And see whether it changed.
 				if (s != t) {
 					if (dry) {
 						cout << file << ':' << j + 1 << '\n';
