@@ -79,9 +79,11 @@ void help() {
 			"and files on subsequent lines or in the rest of the command line\n";
 }
 
-bool dry;
-bool comments;
+// SORT
 vector<string> args1;
+bool comments;
+bool dry;
+///
 
 void parse(const vector<string> &args) {
 	for (auto &s : args) {
