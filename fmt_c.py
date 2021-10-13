@@ -49,9 +49,11 @@ def special(s):
         return 1
     if s in ("namespace", "SORT", "NO_SORT"):
         return 1
+    if s.startswith("clang-format off") or s.startswith("clang-format on"):
+        return 1
     if s.startswith("http"):
         return 1
-    if s.startswith("TODO"):
+    if s.lower().startswith("todo:"):
         return 1
 
 
@@ -158,7 +160,7 @@ def case(i, dent):
     case_mark = dent + "(case .*|default):$"
     while 1:
         if not re.match(case_mark, lines[i]):
-            raise ValueError(filename + ":" + str(i) + ": case not found")
+            raise ValueError(filename + ":" + str(i + 1) + ": case not found")
         while re.match(case_mark, lines[i]):
             i += 1
         if dent + "{" == lines[i]:
@@ -168,7 +170,7 @@ def case(i, dent):
                     raise ValueError(
                         filename
                         + ":"
-                        + str(i)
+                        + str(i + 1)
                         + ": another case in the middle of block"
                     )
                 i += 1
@@ -224,9 +226,13 @@ def var_key(x):
     if m:
         x = m[1]
     else:
-        m = re.match(r".* (\w+);", x)
+        m = re.match(r".* (\w+)\(", x)
         if m:
             x = m[1]
+        else:
+            m = re.match(r".* (\w+);", x)
+            if m:
+                x = m[1]
     return x.lower(), x
 
 
@@ -246,22 +252,24 @@ def sort_single():
 
 
 def get_multi_element(dent, i, j):
+    i0 = i
+    while re.match(r"\s*//", lines[i]):
+        i += 1
     m = re.match(r"(\s*).*{$", lines[i])
     if not m:
-        raise ValueError(filename + ":" + str(i) + ": inconsistent syntax")
+        raise ValueError(filename + ":" + str(i + 1) + ": inconsistent syntax")
     if m[1] != dent:
-        raise ValueError(filename + ":" + str(i) + ": inconsistent indent")
-    i0 = i
+        raise ValueError(filename + ":" + str(i + 1) + ": inconsistent indent")
     while lines[i] != dent + "}":
         i += 1
         if i > j:
-            raise ValueError(filename + ":" + str(i) + ": inconsistent syntax")
+            raise ValueError(filename + ":" + str(i + 1) + ": inconsistent syntax")
     i += 1
     return lines[i0:i], i
 
 
 def get_multi_elements(i, j):
-    m = re.match(r"(\s*).*{$", lines[i])
+    m = re.match(r"(\s*).*", lines[i])
     dent = m[1]
     xss = []
     while i < j:
@@ -273,7 +281,10 @@ def get_multi_elements(i, j):
 
 
 def fn_key(xs):
-    x = xs[0]
+    i = 0
+    while re.match(r"\s*//", xs[i]):
+        i += 1
+    x = xs[i]
     m = re.match(r".* (\w+)\(", x)
     if m:
         x = m[1]
@@ -296,9 +307,9 @@ def sort_multi():
             i += 1
             if lines[i] == "":
                 raise ValueError(
-                    filename + ":" + str(i) + ": blank line after SORT directive"
+                    filename + ":" + str(i + 1) + ": blank line after SORT directive"
                 )
-            if not lines[i].endswith("{"):
+            if not lines[i].endswith("{") and not re.match(r"\s*//", lines[i]):
                 continue
             j = i
             while not re.match(r"\s*///$", lines[j]):
