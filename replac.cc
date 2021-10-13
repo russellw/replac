@@ -225,10 +225,10 @@ int main(int argc, char **argv) {
 				// And see whether it changed.
 				if (s != t) {
 					if (dry) {
-						cout << file << ':' << j + 1 << '\n';
-						cout << s << '\n';
-						cout << t << '\n';
-						cout << '\n';
+						cout << file << ':' << j + 1 << ": ";
+						int k = 0;
+						while (k < t.size() && isSpace(t[k])) ++k;
+						cout << t.substr(k, t.size() - k) << '\n';
 					} else
 						s = t;
 					++changed;
