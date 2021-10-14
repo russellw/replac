@@ -24,7 +24,7 @@ using std::string;
 #include <vector>
 using std::vector;
 
-#define version "1"
+#define version "2a"
 
 #ifdef DEBUG
 #define dbg(a) cout << __FILE__ << ':' << __LINE__ << ": " << #a << ": " << a << '\n';
@@ -65,6 +65,8 @@ void help() {
 			"\n"
 			"-c  Replace in comments\n"
 			"    Otherwise, replac tries to skip comments\n"
+			"-w  Search for whole words\n"
+			"    This is equivalent to putting \\b on either side of from\n"
 			"\n"
 			"-d  Dry run\n"
 			"    Don't actually change any files, just show what changes would be made\n"
@@ -75,14 +77,14 @@ void help() {
 			"@foo.txt reads args from file foo.txt\n"
 			"This is useful for regular expressions that are hard to specify on the command line\n"
 			"because they use characters the command shell also regards as special;\n"
-			"in that case, from and to can be the first two lines of foo.txt\n"
-			"and files on subsequent lines or in the rest of the command line\n";
+			"in that case, from and to can be the first two lines of foo.txt\n";
 }
 
 // SORT
 vector<string> args1;
 bool comments;
 bool dry;
+bool words;
 ///
 
 void parse(const vector<string> &args) {
@@ -131,6 +133,9 @@ void parse(const vector<string> &args) {
 		case 'v':
 			cout << "replac version " version "\n";
 			exit(0);
+		case 'w':
+			words = 1;
+			break;
 		default:
 			cerr << s << ": unknown option\n";
 			exit(1);
@@ -172,6 +177,7 @@ int main(int argc, char **argv) {
 		help();
 		return 1;
 	}
+	if (words) args1[0] = "\\b" + args1[0] + "\\b";
 
 	// From becomes a regular expression; if there was an error in the syntax thereof, an exception will be thrown, so a try-catch
 	// block must begin here.

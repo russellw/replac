@@ -288,7 +288,7 @@ def fn_key(xs):
     m = re.match(r".* (\w+)\(", x)
     if m:
         x = m[1]
-    return x.lower(), x
+    return x.lower(), x, xs[i]
 
 
 def sort_multi_block(i, j):
