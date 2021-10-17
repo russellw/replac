@@ -89,11 +89,8 @@ bool words;
 
 void parse(const vector<string> &args) {
 	for (auto &s : args) {
-		// Skip empty strings that might be blank lines in response file.
-		if (s.empty()) continue;
-
 		// Response file.
-		if (s[0] == '@') {
+		if (s.size() && s[0] == '@') {
 			vector<string> v;
 			readFile(s.substr(1, s.size() - 1), v);
 			parse(v);
