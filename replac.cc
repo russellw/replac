@@ -72,12 +72,13 @@ void help() {
 			"    Don't actually change any files, just show what changes would be made\n"
 			"\n"
 			"From: a regular expression\n"
-			"To  : a replacement pattern as in C++ std::regex_replace\n"
+			"To  : a replacement pattern\n"
+			"      http://www.cplusplus.com/reference/regex/regex_replace/\n"
 			"\n"
-			"@foo.txt reads args from file foo.txt\n"
+			"@foo reads args from file foo\n"
 			"This is useful for regular expressions that are hard to specify on the command line\n"
 			"because they use characters the command shell also regards as special;\n"
-			"in that case, from and to can be the first two lines of foo.txt\n";
+			"in that case, from and to can be the first two lines of foo.\n";
 }
 
 // SORT
