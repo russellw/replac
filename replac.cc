@@ -65,6 +65,8 @@ void help() {
 			"\n"
 			"-c  Replace in comments\n"
 			"    Otherwise, replac tries to skip comments\n"
+			"-l  Line mode\n"
+			"    Used with an empty replacement pattern, deletes entire lines\n"
 			"-w  Search for whole words\n"
 			"    This is equivalent to putting \\b on either side of from\n"
 			"\n"
@@ -85,6 +87,7 @@ void help() {
 vector<string> args1;
 bool comments;
 bool dry;
+bool lineMode;
 bool words;
 ///
 
@@ -127,6 +130,9 @@ void parse(const vector<string> &args) {
 		case 'n':
 			dry = 1;
 			break;
+		case 'l':
+			lineMode = 1;
+			break;
 		case 'V':
 		case 'v':
 			cout << "replac version " version "\n";
@@ -159,6 +165,26 @@ bool endsWith(const string &s, const char *t) {
 	int n = strlen(t);
 	if (n > i) return 0;
 	return eq(s, i - n, t);
+}
+
+bool isComment(bool isc, const string &s) {
+	// If comments mode is set, we don't treat comments as anything special.
+	if (comments) return 0;
+
+	// C++ style line comments.
+	if (startsWith(s, "//")) return 1;
+
+	// If this doesn't seem to be a C family language, check for # that is used as a line comment marker in many other languages.
+	if (!isc) return startsWith(s, "#");
+
+	// Did not find a comment marker.
+	return 0;
+}
+
+void printLeft(const string &s) {
+	int i = 0;
+	while (i < s.size() && isSpace(s[i])) ++i;
+	cout << s.substr(i, s.size() - i);
 }
 
 int main(int argc, char **argv) {
@@ -211,41 +237,75 @@ int main(int argc, char **argv) {
 			// Remember the number of lines we changed, or would have changed, in this file.
 			int changed = 0;
 
-			// For each line in the file.
-			for (int j = 0; j < v.size(); ++j) {
-				auto &s = v[j];
-
-				// Unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
-				// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used
-				// markers.
-				if (!comments) {
-					if (startsWith(s, "//")) continue;
-					if (!isc && startsWith(s, "#")) continue;
+			if (lineMode) {
+				if (!to.empty()) {
+					cerr << "Line mode requires empty replacement\n";
+					return 1;
 				}
+				vector<string> w;
+				w.reserve(v.size());
 
-				// Try doing the actual replace in this line.
-				auto t = regex_replace(s, from, to);
+				// For each line in the file.
+				for (int j = 0; j < v.size(); ++j) {
+					auto &s = v[j];
 
-				// And see whether it changed.
-				if (s != t) {
-					if (dry) {
-						cout << file << ':' << j + 1 << ": ";
-						int k = 0;
-						while (k < t.size() && isSpace(t[k])) ++k;
-						cout << t.substr(k, t.size() - k) << '\n';
+					// Unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
+					// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used
+					// markers.
+					if (isComment(isc, s)) {
+						w.push_back(s);
+						continue;
+					}
+
+					// Check whether it matches.
+					if (regex_match(s, from)) {
+						if (dry) {
+							cout << file << ':' << j + 1 << ": ";
+							printLeft(s);
+							cout << '\n';
+						}
+						++changed;
 					} else
-						s = t;
-					++changed;
+						w.push_back(s);
 				}
-			}
 
-			if (changed) {
-				if (!dry) {
+				// Write changes if this is a live run.
+				if (changed && !dry) {
+					writeFile(file, w);
+					cout << file << ' ' << changed << '\n';
+				}
+			} else {
+				// For each line in the file.
+				for (int j = 0; j < v.size(); ++j) {
+					auto &s = v[j];
+
+					// Unless instructed otherwise, replac will try to skip comments. It doesn't claim anything like an encyclopedic
+					// knowledge of comment syntax in different programming languages, but looks for some of the more commonly used
+					// markers.
+					if (isComment(isc, s)) continue;
+
+					// Try doing the actual replace in this line.
+					auto t = regex_replace(s, from, to);
+
+					// And see whether it changed.
+					if (s != t) {
+						if (dry) {
+							cout << file << ':' << j + 1 << ": ";
+							printLeft(t);
+							cout << '\n';
+						} else
+							s = t;
+						++changed;
+					}
+				}
+
+				// Write changes if this is a live run.
+				if (changed && !dry) {
 					writeFile(file, v);
 					cout << file << ' ' << changed << '\n';
 				}
-				tot += changed;
 			}
+			tot += changed;
 		}
 		cout << tot << '\n';
 	} catch (const regex_error &e) {
