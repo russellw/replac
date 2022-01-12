@@ -48,7 +48,7 @@ void readFile(const string &file, vector<string> &v) {
 }
 
 void writeFile(const string &file, const vector<string> &v) {
-	ofstream f(file.c_str());
+	ofstream f(file.c_str(), std::ios_base::binary);
 	if (!f) {
 		perror(file.c_str());
 		exit(1);
