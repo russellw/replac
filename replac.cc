@@ -91,13 +91,13 @@ bool lineMode;
 bool words;
 ///
 
-void parse(const vector<string> &args) {
+void parse(const vector<string> &args, bool responseFile) {
 	for (auto &s : args) {
 		// Response file.
-		if (s.size() && s[0] == '@') {
+		if (!responseFile && s.size() && s[0] == '@') {
 			vector<string> v;
 			readFile(s.substr(1, s.size() - 1), v);
-			parse(v);
+			parse(v, 1);
 			continue;
 		}
 
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 
 	// Command line arguments.
 	vector<string> args(argv + 1, argv + argc);
-	parse(args);
+	parse(args, 0);
 	if (args1.size() < 3) {
 		help();
 		return 1;
